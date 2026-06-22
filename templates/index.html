@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreatorFlow - 自媒体创作平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+    <style>
+        /* ========== CSS Variables ========== */
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(255,255,255,0.04);
+            --bg-card-hover: rgba(255,255,255,0.07);
+            --text-primary: #e8e8f0;
+            --text-secondary: #8888a0;
+            --text-muted: #555570;
+            --accent: #7c3aed;
+            --accent-light: #a78bfa;
+            --accent-bg: rgba(124,58,237,0.12);
+            --blue: #3b82f6;
+            --pink: #ec4899;
+            --green: #22c55e;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --border: rgba(255,255,255,0.08);
+            --border-light: rgba(255,255,255,0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ========== Reset ========== */
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ========== Background ========== */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 600px 400px at 15% 20%, rgba(124,58,237,0.08), transparent),
+                radial-gradient(ellipse 500px 500px at 85% 80%, rgba(59,130,246,0.06), transparent),
+                radial-gradient(ellipse 400px 300px at 50% 50%, rgba(236,72,153,0.04), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ========== Scrollbar ========== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        /* ========== Header ========== */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10,10,15,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+        }
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        /* ========== Nav Tabs ========== */
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: rgba(255,255,255,0.04);
+            padding: 4px;
+            border-radius: 12px;
+        }
+        .nav-tab {
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .nav-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+        .nav-tab.active {
+            color: white;
+            background: var(--accent);
+            box-shadow: 0 2px 12px rgba(124,58,237,0.4);
+        }
+
+        /* ========== Mobile Menu ========== */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* ========== Main Container ========== */
+        .main {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+        }
+
+        /* ========== Section ========== */
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== Hero ========== */
+        .hero {
+            text-align: center;
+            padding: 48px 0 40px;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, var(--accent-light) 50%, var(--blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* ========== Pipeline Input ========== */
+        .pipeline-input-wrap {
+            max-width: 700px;
+            margin: 36px auto 0;
+            position: relative;
+        }
+        .pipeline-input {
+            width: 100%;
+            padding: 20px 160px 20px 24px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            outline: none;
+            transition: var(--transition);
+        }
+        .pipeline-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+        }
+        .pipeline-input::placeholder { color: var(--text-muted); }
+        .pipeline-actions {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 6px;
+        }
+
+        /* ========== Buttons ========== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #6d28d9);
+            color: white;
+            box-shadow: 0 2px 16px rgba(124,58,237,0.3);
+        }
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 4px 24px rgba(124,58,237,0.5);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+        .btn-blue {
+            background: linear-gradient(135deg, var(--blue), #2563eb);
+            color: white;
+        }
+        .btn-pink {
+            background: linear-gradient(135deg, var(--pink), #db2777);
+            color: white;
+        }
+        .btn-green {
+            background: linear-gradient(135deg, var(--green), #16a34a);
+            color: white;
+        }
+        .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+        .btn-lg { padding: 14px 32px; font-size: 1rem; }
+        .btn-icon {
+            width: 40px; height: 40px; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 10px;
+        }
+
+        /* ========== Feature Cards (Quick Actions) ========== */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 40px;
+        }
+        .quick-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+        .quick-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-light);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+        }
+        .quick-card .icon {
+            width: 56px; height: 56px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+            margin: 0 auto 16px;
+        }
+        .quick-card h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 6px; }
+        .quick-card p { color: var(--text-secondary); font-size: 0.85rem; }
+
+        /* ========== Tool Sections ========== */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 24px;
+            min-height: 500px;
+        }
+        .tool-form {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+        }
+        .tool-form h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .tool-form .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        .tool-result {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            overflow-y: auto;
+            max-height: 700px;
+        }
+
+        /* ========== Form Elements ========== */
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+        }
+        .form-textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
+        .form-select option { background: var(--bg-secondary); }
+
+        /* ========== Result Display ========== */
+        .result-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 300px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .result-placeholder .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+        .result-placeholder p { font-size: 0.95rem; }
+
+        .result-content {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+        .result-content h1, .result-content h2, .result-content h3 {
+            margin: 20px 0 10px;
+            color: var(--accent-light);
+        }
+        .result-content h1 { font-size: 1.4rem; }
+        .result-content h2 { font-size: 1.2rem; }
+        .result-content h3 { font-size: 1.05rem; }
+        .result-content p { margin-bottom: 12px; }
+        .result-content ul, .result-content ol {
+            margin: 8px 0 12px 20px;
+        }
+        .result-content li { margin-bottom: 4px; }
+        .result-content strong { color: #fff; }
+        .result-content code {
+            background: rgba(255,255,255,0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        .result-content blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: 16px;
+            margin: 12px 0;
+            color: var(--text-secondary);
+        }
+
+        /* ========== Image Result ========== */
+        .image-result {
+            text-align: center;
+        }
+        .image-result img {
+            max-width: 100%;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+        }
+        .image-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        /* ========== Loading ========== */
+        .loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            gap: 20px;
+        }
+        .spinner {
+            width: 48px; height: 48px;
+            border: 3px solid rgba(124,58,237,0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* ========== Progress Bar ========== */
+        .progress-wrap {
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--blue));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* ========== Pipeline Steps ========== */
+        .pipeline-steps {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin: 36px 0;
+            flex-wrap: wrap;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .step + .step { margin-left: -1px; }
+        .step .step-num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700;
+            flex-shrink: 0;
+        }
+        .step.active {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--accent-bg);
+        }
+        .step.active .step-num {
+            background: var(--accent);
+            color: white;
+        }
+        .step.done {
+            border-color: var(--green);
+            color: var(--green);
+        }
+        .step.done .step-num {
+            background: var(--green);
+            color: white;
+        }
+
+        /* ========== Pipeline Result ========== */
+        .pipeline-result {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 24px;
+        }
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            overflow: hidden;
+        }
+        .result-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .result-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* ========== Projects ========== */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .project-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .project-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .project-thumb {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(59,130,246,0.15));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: rgba(255,255,255,0.3);
+            overflow: hidden;
+        }
+        .project-thumb img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .project-info {
+            padding: 18px 20px;
+        }
+        .project-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .project-info .meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .project-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-completed { background: rgba(34,197,94,0.12); color: var(--green); }
+        .status-generating { background: rgba(124,58,237,0.12); color: var(--accent-light); }
+        .status-video_processing { background: rgba(59,130,246,0.12); color: var(--blue); }
+        .status-failed { background: rgba(239,68,68,0.12); color: var(--red); }
+
+        /* ========== Modal ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 900px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 32px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+
+        /* ========== Toast ========== */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            box-shadow: var(--shadow);
+            animation: slideInRight 0.3s ease;
+            max-width: 360px;
+        }
+        .toast.success { border-left: 3px solid var(--green); }
+        .toast.error { border-left: 3px solid var(--red); }
+        .toast.info { border-left: 3px solid var(--blue); }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ========== Empty State ========== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state .icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.4; }
+        .empty-state h3 { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* ========== Responsive ========== */
+        @media (max-width: 1024px) {
+            .tool-grid {
+                grid-template-columns: 1fr;
+            }
+            .pipeline-result {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .header-inner { height: 56px; }
+            .nav-tabs.desktop-nav { display: none; }
+            .menu-toggle { display: block; }
+            .main { padding: 20px 16px 60px; }
+            .hero { padding: 28px 0 24px; }
+            .hero h1 { font-size: 1.8rem; }
+            .hero p { font-size: 0.95rem; }
+            .pipeline-input { padding: 16px 16px 16px 18px; font-size: 0.95rem; }
+            .pipeline-actions {
+                position: static;
+                transform: none;
+                margin-top: 12px;
+                justify-content: center;
+            }
+            .quick-actions { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .quick-card { padding: 20px 16px; }
+            .quick-card .icon { width: 44px; height: 44px; font-size: 1.2rem; }
+            .tool-grid { gap: 16px; }
+            .tool-form, .tool-result { padding: 20px; }
+            .projects-grid { grid-template-columns: 1fr; }
+            .pipeline-steps { flex-direction: column; align-items: center; gap: 8px; }
+            .step + .step { margin-left: 0; }
+            #sceneGrid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 480px) {
+            .quick-actions { grid-template-columns: 1fr; }
+            .btn { padding: 10px 16px; font-size: 0.85rem; }
+        }
+
+        /* Mobile nav drawer */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 56px;
+            left: 0; right: 0;
+            background: rgba(10,10,15,0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px;
+            z-index: 99;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .mobile-nav.active { display: flex; }
+        .mobile-nav .nav-tab {
+            width: 100%;
+            text-align: left;
+            padding: 12px 16px;
+        }
+
+        /* ========== Video Element ========== */
+        .result-video {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            margin-top: 12px;
+        }
+
+        /* ========== Utility ========== */
+        .text-center { text-align: center; }
+        .mt-2 { margin-top: 8px; }
+        .mt-4 { margin-top: 16px; }
+        .mt-6 { margin-top: 24px; }
+        .mb-4 { margin-bottom: 16px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .gap-2 { gap: 8px; }
+        .hidden { display: none !important; }
+
+        /* ========== Copy Button ========== */
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+        }
+        .result-card { position: relative; }
+
+        /* ========== Tag / Badge ========== */
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== Header ==================== -->
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <span class="logo-icon">CF</span>
+            <span>CreatorFlow</span>
+        </a>
+        <nav class="nav-tabs desktop-nav">
+            <button class="nav-tab active" onclick="switchTab('pipeline')">一键创作</button>
+            <button class="nav-tab" onclick="switchTab('script')">脚本生成</button>
+            <button class="nav-tab" onclick="switchTab('image')">图片生成</button>
+            <button class="nav-tab" onclick="switchTab('video')">视频生成</button>
+            <button class="nav-tab" onclick="switchTab('projects')">我的项目</button>
+        </nav>
+        <button class="menu-toggle" onclick="toggleMobileMenu()">&#9776;</button>
+    </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+    <button class="nav-tab active" onclick="switchTab('pipeline'); closeMobileMenu()">一键创作</button>
+    <button class="nav-tab" onclick="switchTab('script'); closeMobileMenu()">脚本生成</button>
+    <button class="nav-tab" onclick="switchTab('image'); closeMobileMenu()">图片生成</button>
+    <button class="nav-tab" onclick="switchTab('video'); closeMobileMenu()">视频生成</button>
+    <button class="nav-tab" onclick="switchTab('projects'); closeMobileMenu()">我的项目</button>
+</div>
+
+<!-- ==================== Main Content ==================== -->
+<main class="main">
+
+    <!-- ===== Pipeline Section ===== -->
+    <section id="section-pipeline" class="section active">
+        <div class="hero">
+            <h1>AI 自媒体创作引擎</h1>
+            <p>输入一个主题，自动生成视频脚本、主图和多个可编辑场景，开启高效内容创作</p>
+        </div>
+
+        <div class="pipeline-input-wrap">
+            <input type="text" class="pipeline-input" id="pipelineTopic"
+                   placeholder="输入你想创作的主题，例如：如何用5分钟学会做拿铁咖啡"
+                   onkeydown="if(event.key==='Enter') runPipeline(false)">
+            <div class="pipeline-actions">
+                <button class="btn btn-primary" onclick="runPipeline(false)" id="btnPipeline">
+                    一键生成
+                </button>
+                <button class="btn btn-blue" onclick="runPipeline(true)" id="btnPipelineFull">
+                    + 场景视频
+                </button>
+            </div>
+        </div>
+
+        <!-- Pipeline Steps Indicator -->
+        <div class="pipeline-steps" id="pipelineSteps" style="display:none">
+            <div class="step" id="step1">
+                <span class="step-num">1</span>
+                <span>生成脚本</span>
+            </div>
+            <div class="step" id="step2">
+                <span class="step-num">2</span>
+                <span>生成封面</span>
+            </div>
+            <div class="step" id="step3">
+                <span class="step-num">3</span>
+                <span>生成场景</span>
+            </div>
+        </div>
+
+        <!-- Pipeline Results -->
+        <div id="pipelineResult" style="display:none">
+            <div class="pipeline-result">
+                <!-- Script Card -->
+                <div class="result-card full-width">
+                    <h3>&#128221; 视频脚本</h3>
+                    <button class="btn btn-sm btn-secondary copy-btn" onclick="copyText('pipelineScriptContent')">&#128203; 复制</button>
+                    <div class="result-content" id="pipelineScriptContent"></div>
+                </div>
+                <!-- Image Card -->
+                <div class="result-card">
+                    <h3>&#127912; 封面图片</h3>
+                    <textarea class="form-textarea" id="pipelineCoverPrompt" rows="3"
+                              placeholder="可编辑主图描述，不满意就重新生成"></textarea>
+                    <div class="image-result" id="pipelineImageResult">
+                        <p style="color:var(--text-muted)">等待生成...</p>
+                    </div>
+                </div>
+                <!-- Video Card -->
+                <div class="result-card" id="pipelineVideoCard" style="display:none">
+                    <h3>&#127909; 视频预览</h3>
+                    <div id="pipelineVideoResult">
+                        <p style="color:var(--text-muted)">等待生成...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-card full-width mt-4" id="pipelineScenesCard" style="display:none">
+                <h3>&#127916; 分镜场景</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px" id="pipelineSceneGrid"></div>
+                <div id="pipelineMergeBtn" style="display:none;text-align:center;margin-top:16px">
+                    <button class="btn btn-pink btn-lg" onclick="mergeVideos(currentPipelineProject?.long_video_group_id)">
+                        &#127916; 合并视频
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center mt-6">
+                <button class="btn btn-secondary btn-lg" onclick="saveToProject()">
+                    &#128190; 保存到项目
+                </button>
+                <button class="btn btn-green btn-lg" style="margin-left:12px" onclick="switchTab('script')">
+                    &#9998; 继续编辑脚本
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions" id="quickActions">
+            <div class="quick-card" onclick="switchTab('script')">
+                <div class="icon" style="background:rgba(124,58,237,0.15)">&#128221;</div>
+                <h3>脚本生成</h3>
+                <p>AI 自动生成视频脚本，结构清晰可直接拍摄</p>
+            </div>
+            <div class="quick-card" onclick="switchTab('image')">
+                <div class="icon" style="background:rgba(59,130,246,0.15)">&#127912;</div>
+                <h3>图片生成</h3>
+                <p>文字描述即可生成高质量封面图、配图</p>
+            </div>
+            <div class="quick-card" onclick="switchTab('video')">
+                <div class="icon" style="background:rgba(236,72,153,0.15)">&#127909;</div>
+                <h3>视频生成</h3>
+                <p>一句话描述，AI 自动生成短视频素材</p>
+            </div>
+            <div class="quick-card" onclick="switchTab('projects')">
+                <div class="icon" style="background:rgba(34,197,94,0.15)">&#128193;</div>
+                <h3>我的项目</h3>
+                <p>管理所有创作内容，随时查看和编辑</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Script Section ===== -->
+    <section id="section-script" class="section">
+        <div class="tool-grid">
+            <div class="tool-form">
+                <h2>&#128221; 脚本生成</h2>
+                <p class="subtitle">输入主题或自定义提示词，AI 为你生成专业视频脚本</p>
+                <div class="form-group">
+                    <label>视频主题</label>
+                    <input type="text" class="form-input" id="scriptTopic" placeholder="例如：10个让房间更整洁的收纳技巧">
+                </div>
+                <div class="form-group">
+                    <label>自定义提示词（可选）</label>
+                    <textarea class="form-textarea" id="scriptPrompt" rows="4"
+                              placeholder="如果你有更具体的需求，可以在这里详细描述..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>AI 辅助</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button class="btn btn-sm btn-secondary" onclick="aiOptimize('title')">生成爆款标题</button>
+                        <button class="btn btn-sm btn-secondary" onclick="aiOptimize('tags')">推荐热门标签</button>
+                        <button class="btn btn-sm btn-secondary" onclick="aiOptimize('optimize')">优化文案</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-lg" style="width:100%" onclick="generateScript()" id="btnScript">
+                    生成脚本
+                </button>
+                <div id="scriptAiResult" class="mt-4" style="display:none">
+                    <div class="result-card" style="background:var(--accent-bg);border-color:var(--accent)">
+                        <h3 style="font-size:0.95rem">AI 辅助结果</h3>
+                        <div class="result-content" id="scriptAiContent" style="font-size:0.88rem"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-result" id="scriptResult">
+                <div class="result-placeholder">
+                    <div class="icon">&#128221;</div>
+                    <p>生成的脚本将在这里显示</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Image Section ===== -->
+    <section id="section-image" class="section">
+        <div class="tool-grid">
+            <div class="tool-form">
+                <h2>&#127912; 图片生成</h2>
+                <p class="subtitle">描述你想要的画面，AI 为你生成高质量图片</p>
+                <div class="form-group">
+                    <label>图片描述</label>
+                    <textarea class="form-textarea" id="imagePrompt" rows="4"
+                              placeholder="描述你想要的画面，越详细越好。例如：一杯冒着热气的拿铁咖啡，俯视角度，背景是木质桌面和一本打开的书..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>图片尺寸</label>
+                    <select class="form-select" id="imageSize">
+                        <option value="1024x768">1024 x 768 (横版 4:3)</option>
+                        <option value="1024x1024">1024 x 1024 (方形 1:1)</option>
+                        <option value="768x1024">768 x 1024 (竖版 3:4)</option>
+                        <option value="1024x576">1024 x 576 (宽屏 16:9)</option>
+                    </select>
+                </div>
+                <button class="btn btn-blue btn-lg" style="width:100%" onclick="generateImage()" id="btnImage">
+                    生成图片
+                </button>
+            </div>
+            <div class="tool-result" id="imageResult">
+                <div class="result-placeholder">
+                    <div class="icon">&#127912;</div>
+                    <p>生成的图片将在这里显示</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Video Section ===== -->
+    <section id="section-video" class="section">
+        <div class="tool-grid">
+            <div class="tool-form">
+                <h2>&#127909; 视频生成</h2>
+                <p class="subtitle">描述你想要的视频画面，AI 自动生成短视频</p>
+                <div class="form-group">
+                    <label>视频描述（建议使用英文获得更好效果）</label>
+                    <textarea class="form-textarea" id="videoPrompt" rows="5"
+                              placeholder="例如：A cinematic shot of a cat walking on the beach at sunset, soft ocean waves, warm golden lighting..."></textarea>
+                </div>
+                <button class="btn btn-pink btn-lg" style="width:100%" onclick="generateVideo()" id="btnVideo">
+                    生成视频
+                </button>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin-top:10px;text-align:center">
+                    视频生成通常需要 1-3 分钟，请耐心等待
+                </p>
+            </div>
+            <div class="tool-result" id="videoResult">
+                <div class="result-placeholder">
+                    <div class="icon">&#127909;</div>
+                    <p>生成的视频将在这里显示</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Long Video Section ===== -->
+    <section id="section-longvideo" class="section">
+        <div class="hero" style="padding-bottom:24px">
+            <h1 style="font-size:clamp(1.6rem,4vw,2.4rem)">长视频生成引擎</h1>
+            <p>自动将主题拆分为多个场景，逐场景生成 5 秒视频片段，拼接即为完整长视频</p>
+        </div>
+
+        <div class="pipeline-input-wrap" style="max-width:700px;margin:0 auto">
+            <input type="text" class="pipeline-input" id="longVideoTopic"
+                   placeholder="输入主题，例如：探访日本京都的古老寺庙"
+                   onkeydown="if(event.key==='Enter') startLongVideo()">
+            <div class="pipeline-actions">
+                <button class="btn btn-pink btn-lg" onclick="startLongVideo()" id="btnLongVideo">
+                    生成长视频
+                </button>
+            </div>
+        </div>
+
+        <!-- Overall Progress -->
+        <div id="longVideoProgress" style="display:none" class="mt-6">
+            <div style="max-width:700px;margin:0 auto">
+                <div class="flex-between mb-4">
+                    <span style="font-size:0.95rem;font-weight:600" id="lvProgressTitle">场景生成中...</span>
+                    <span style="font-size:0.85rem;color:var(--text-secondary)" id="lvProgressPct">0%</span>
+                </div>
+                <div class="progress-bar" style="height:10px">
+                    <div class="progress-fill" id="lvProgressBar" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scene Cards -->
+        <div id="longVideoScenes" class="mt-6" style="display:none">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px" id="sceneGrid">
+            </div>
+        </div>
+
+        <!-- Download All -->
+        <div id="longVideoDownload" style="display:none" class="mt-6 text-center">
+            <button class="btn btn-green btn-lg" onclick="downloadAllClips()">
+                &#11015; 下载全部视频片段
+            </button>
+            <button class="btn btn-secondary btn-lg" style="margin-left:12px" onclick="copyAllLinks()">
+                &#128203; 复制全部链接
+            </button>
+            <button class="btn btn-pink btn-lg" style="margin-left:12px" onclick="mergeVideos(lvCurrentGroupId)">
+                &#127916; 合并视频
+            </button>
+        </div>
+
+        <!-- Script Preview -->
+        <div id="longVideoScript" style="display:none" class="mt-6">
+            <div class="result-card">
+                <h3>&#128221; 分镜脚本</h3>
+                <button class="btn btn-sm btn-secondary copy-btn" onclick="copyText('lvScriptContent')">&#128203; 复制</button>
+                <div class="result-content" id="lvScriptContent"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Projects Section ===== -->
+    <section id="section-projects" class="section">
+        <div class="flex-between mb-4">
+            <h2 style="font-size:1.4rem;font-weight:700">&#128193; 我的项目</h2>
+            <button class="btn btn-sm btn-secondary" onclick="loadProjects()">&#8635; 刷新</button>
+        </div>
+        <div class="projects-grid" id="projectsGrid">
+            <div class="empty-state" style="grid-column:1/-1">
+                <div class="icon">&#128193;</div>
+                <h3>暂无项目</h3>
+                <p>使用一键创作功能开始你的第一个项目</p>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- ==================== Project Detail Modal ==================== -->
+<div class="modal-overlay" id="projectModal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <div id="modalContent"></div>
+    </div>
+</div>
+
+<!-- ==================== Toast Container ==================== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ==================== JavaScript ==================== -->
+<script>
+    // ========== Config ==========
+    marked.setOptions({
+        breaks: true,
+        gfm: true,
+        headerIds: false,
+        mangle: false
+    });
+
+    let currentPipelineProject = null;
+    let videoPollTimer = null;
+    let pipelineScenePollTimer = null;
+
+    // ========== Tab Navigation ==========
+    function switchTab(name) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('section-' + name).classList.add('active');
+
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => {
+            if (t.textContent.trim() === getTabLabel(name)) t.classList.add('active');
+        });
+
+        if (name === 'projects') loadProjects();
+    }
+
+    function getTabLabel(name) {
+        const map = { pipeline:'一键创作', script:'脚本生成', image:'图片生成', video:'视频生成', projects:'我的项目' };
+        return map[name] || name;
+    }
+
+    // ========== Mobile Menu ==========
+    function toggleMobileMenu() {
+        document.getElementById('mobileNav').classList.toggle('active');
+    }
+    function closeMobileMenu() {
+        document.getElementById('mobileNav').classList.remove('active');
+    }
+
+    // ========== Toast Notifications ==========
+    function showToast(msg, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = msg;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(40px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    // ========== Loading State ==========
+    function showLoading(containerId, text = 'AI 正在创作中...') {
+        document.getElementById(containerId).innerHTML = `
+            <div class="loading-overlay">
+                <div class="spinner"></div>
+                <div class="loading-text">${text}</div>
+            </div>`;
+    }
+
+    function showProgress(containerId, progress = 0, text = '视频生成中...') {
+        document.getElementById(containerId).innerHTML = `
+            <div class="loading-overlay">
+                <div class="spinner"></div>
+                <div class="loading-text">${text}</div>
+                <div class="progress-wrap">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width:${progress}%"></div>
+                    </div>
+                    <div class="progress-text">${progress}%</div>
+                </div>
+            </div>`;
+    }
+
+    // ========== Render Markdown ==========
+    function renderMd(text) {
+        return marked.parse(text || '');
+    }
+
+    // ========== Copy Text ==========
+    function copyText(elementId) {
+        const el = document.getElementById(elementId);
+        const text = el.innerText || el.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('已复制到剪贴板', 'success');
+        }).catch(() => {
+            // fallback
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.execCommand('copy');
+            sel.removeAllRanges();
+            showToast('已复制到剪贴板', 'success');
+        });
+    }
+
+    // ========== Pipeline ==========
+    async function runPipeline(includeVideo) {
+        const topic = document.getElementById('pipelineTopic').value.trim();
+        if (!topic) { showToast('请输入创作主题', 'error'); return; }
+
+        const btnPipeline = document.getElementById('btnPipeline');
+        const btnPipelineFull = document.getElementById('btnPipelineFull');
+        btnPipeline.disabled = true;
+        btnPipelineFull.disabled = true;
+
+        document.getElementById('quickActions').style.display = 'none';
+        document.getElementById('pipelineSteps').style.display = 'flex';
+        document.getElementById('pipelineResult').style.display = 'none';
+
+        // Set steps
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        step1.className = 'step active';
+        step2.className = 'step';
+        step3.className = 'step';
+        step3.style.display = 'flex';
+
+        const url = includeVideo ? '/api/pipeline/full' : '/api/pipeline';
+
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic })
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                showToast(data.error || '生成失败', 'error');
+                btnPipeline.disabled = false;
+                btnPipelineFull.disabled = false;
+                return;
+            }
+
+            const project = data.project;
+            currentPipelineProject = project;
+
+            // Mark step 1 done
+            step1.className = 'step done';
+            step2.className = 'step active';
+
+            // Show results
+            document.getElementById('pipelineResult').style.display = 'block';
+            document.getElementById('pipelineScriptContent').innerHTML = renderMd(project.script);
+            document.getElementById('pipelineScenesCard').style.display = 'block';
+            renderPipelineScenes(project.long_video_scenes || []);
+
+            // Handle image
+            if (project.image_url) {
+                step2.className = 'step done';
+                document.getElementById('pipelineCoverPrompt').value = project.cover_prompt || '';
+                const imgSrc = project.image_local
+                    ? '/' + project.image_local
+                    : project.image_url;
+                document.getElementById('pipelineImageResult').innerHTML = `
+                    <img src="${imgSrc}" alt="封面图片" loading="lazy">
+                    <div class="image-actions">
+                        <a href="${project.image_url}" target="_blank" class="btn btn-sm btn-secondary">&#128279; 原图链接</a>
+                        <button class="btn btn-sm btn-blue" onclick="regeneratePipelineCover()">&#8635; 重新生成主图</button>
+                        <button class="btn btn-sm btn-secondary" onclick="copyText('pipelineImageResult')">&#128203; 复制链接</button>
+                    </div>`;
+            }
+
+            // Handle video
+            if (includeVideo && project.long_video_group_id) {
+                step3.className = 'step active';
+                pollPipelineScenes(project.long_video_group_id);
+            } else {
+                step3.className = 'step done';
+            }
+
+            showToast(includeVideo ? '脚本、主图和场景视频任务已生成！' : '脚本、主图和场景已生成！', 'success');
+
+        } catch (err) {
+            showToast('网络错误，请检查连接', 'error');
+        }
+
+        btnPipeline.disabled = false;
+        btnPipelineFull.disabled = false;
+    }
+
+    function pollPipelineVideo(taskId) {
+        if (videoPollTimer) clearInterval(videoPollTimer);
+        videoPollTimer = setInterval(async () => {
+            try {
+                const resp = await fetch(`/api/video/status/${taskId}`);
+                const data = await resp.json();
+                const progress = data.progress || 0;
+                const status = data.status;
+
+                const bar = document.getElementById('pipelineVideoProgress');
+                const pct = document.getElementById('pipelineVideoPercent');
+                if (bar) bar.style.width = progress + '%';
+                if (pct) pct.textContent = progress + '%';
+
+                if (status === 'completed') {
+                    clearInterval(videoPollTimer);
+                    document.getElementById('step3').className = 'step done';
+                    const videoUrl = data.video_url || data.local_path || '';
+                    if (data.local_path) {
+                        document.getElementById('pipelineVideoResult').innerHTML = `
+                            <video class="result-video" controls src="/${data.local_path}"></video>
+                            <div class="image-actions">
+                                <a href="/${data.local_path}" download class="btn btn-sm btn-green">&#11015; 下载视频</a>
+                            </div>`;
+                    } else if (videoUrl) {
+                        document.getElementById('pipelineVideoResult').innerHTML = `
+                            <video class="result-video" controls src="${videoUrl}"></video>
+                            <div class="image-actions">
+                                <a href="${videoUrl}" target="_blank" class="btn btn-sm btn-secondary">&#128279; 视频链接</a>
+                            </div>`;
+                    }
+                    showToast('视频生成完成！', 'success');
+                } else if (status === 'failed') {
+                    clearInterval(videoPollTimer);
+                    document.getElementById('pipelineVideoResult').innerHTML =
+                        '<p style="color:var(--red)">视频生成失败，请稍后重试</p>';
+                    showToast('视频生成失败', 'error');
+                }
+            } catch (e) { /* retry on next interval */ }
+        }, 3000);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    function renderPipelineScenes(scenes) {
+        const grid = document.getElementById('pipelineSceneGrid');
+        if (!scenes.length) {
+            grid.innerHTML = '<p style="color:var(--text-muted)">暂无场景</p>';
+            return;
+        }
+
+        grid.innerHTML = scenes.map(scene => {
+            const n = scene.scene_num;
+            const text = scene.description || scene.prompt || '';
+            return `
+                <div class="result-card" id="pipeline-scene-card-${n}" style="padding:16px">
+                    <div class="flex-between mb-4">
+                        <span style="font-weight:700;font-size:0.95rem">场景 ${n}</span>
+                        <span class="project-status status-${scene.status || 'generating'}" id="pipeline-scene-status-${n}">
+                            ${scene.status === 'completed' ? '已完成' : scene.status === 'processing' ? '生成中' : scene.status === 'failed' ? '失败' : '待生成'}
+                        </span>
+                    </div>
+                    <textarea class="form-textarea" id="pipeline-scene-desc-${n}" rows="4"
+                              placeholder="编辑这个场景的画面描述">${escapeHtml(text)}</textarea>
+                    <div class="progress-bar mt-2" style="height:6px">
+                        <div class="progress-fill" id="pipeline-scene-progress-${n}" style="width:${scene.progress || 0}%"></div>
+                    </div>
+                    <div id="pipeline-scene-video-${n}" class="mt-2">
+                        ${scene.local_path || scene.video_url ? renderSceneVideo(scene) : ''}
+                    </div>
+                    <div class="image-actions">
+                        <button class="btn btn-sm btn-pink" onclick="regeneratePipelineScene(${n})">&#8635; 重新生成场景</button>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    function renderSceneVideo(scene) {
+        const src = scene.local_path ? '/' + scene.local_path : scene.video_url;
+        return `
+            <video controls style="width:100%;border-radius:8px;margin-top:8px" src="${src}"></video>
+            <a href="${src}" download class="btn btn-sm btn-green mt-2" style="display:inline-flex">&#11015; 下载</a>`;
+    }
+
+    async function regeneratePipelineCover() {
+        if (!currentPipelineProject) return;
+        const prompt = document.getElementById('pipelineCoverPrompt').value.trim();
+        const target = document.getElementById('pipelineImageResult');
+        target.innerHTML = '<div class="loading-overlay" style="min-height:180px"><div class="spinner"></div><div class="loading-text">正在重新生成主图...</div></div>';
+
+        try {
+            const resp = await fetch('/api/pipeline/cover/regenerate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ project_id: currentPipelineProject.id, prompt })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                showToast(data.error || '主图生成失败', 'error');
+                return;
+            }
+            currentPipelineProject.image_url = data.image_url;
+            currentPipelineProject.image_local = data.image_local;
+            const imgSrc = data.image_local ? '/' + data.image_local : data.image_url;
+            target.innerHTML = `
+                <img src="${imgSrc}" alt="封面图片" loading="lazy">
+                <div class="image-actions">
+                    <a href="${data.image_url}" target="_blank" class="btn btn-sm btn-secondary">&#128279; 原图链接</a>
+                    <button class="btn btn-sm btn-blue" onclick="regeneratePipelineCover()">&#8635; 重新生成主图</button>
+                    <button class="btn btn-sm btn-secondary" onclick="copyText('pipelineImageResult')">&#128203; 复制链接</button>
+                </div>`;
+            showToast('主图已重新生成', 'success');
+        } catch (err) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    async function regeneratePipelineScene(sceneNum) {
+        if (!currentPipelineProject?.long_video_group_id) return;
+        const desc = document.getElementById(`pipeline-scene-desc-${sceneNum}`).value.trim();
+        if (!desc) { showToast('请先填写场景描述', 'error'); return; }
+
+        const statusEl = document.getElementById(`pipeline-scene-status-${sceneNum}`);
+        const progressEl = document.getElementById(`pipeline-scene-progress-${sceneNum}`);
+        const videoEl = document.getElementById(`pipeline-scene-video-${sceneNum}`);
+        statusEl.className = 'project-status status-video_processing';
+        statusEl.textContent = '生成中';
+        progressEl.style.width = '0%';
+        videoEl.innerHTML = '<div class="spinner" style="width:24px;height:24px;border-width:2px;margin:12px auto"></div>';
+
+        try {
+            const resp = await fetch('/api/long-video/scene/regenerate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    group_id: currentPipelineProject.long_video_group_id,
+                    scene_num: sceneNum,
+                    description: desc
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                showToast(data.error || '场景生成失败', 'error');
+                return;
+            }
+            pollPipelineScenes(currentPipelineProject.long_video_group_id);
+            showToast(`场景 ${sceneNum} 已开始重新生成`, 'info');
+        } catch (err) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    async function regenerateModalCover() {
+        if (!currentPipelineProject) return;
+        const prompt = document.getElementById('modalCoverPrompt')?.value.trim() || '';
+        try {
+            const resp = await fetch('/api/pipeline/cover/regenerate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ project_id: currentPipelineProject.id, prompt })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                showToast(data.error || '主图生成失败', 'error');
+                return;
+            }
+            showToast('主图已重新生成，重新打开项目可查看', 'success');
+            loadProjects();
+        } catch (err) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    async function regenerateModalScene(sceneNum) {
+        if (!currentPipelineProject?.long_video_group_id) return;
+        const desc = document.getElementById(`modal-scene-desc-${sceneNum}`)?.value.trim() || '';
+        if (!desc) { showToast('请先填写场景描述', 'error'); return; }
+        try {
+            const resp = await fetch('/api/long-video/scene/regenerate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    group_id: currentPipelineProject.long_video_group_id,
+                    scene_num: sceneNum,
+                    description: desc
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                showToast(data.error || '场景生成失败', 'error');
+                return;
+            }
+            showToast(`场景 ${sceneNum} 已开始重新生成`, 'info');
+        } catch (err) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    function pollPipelineScenes(groupId) {
+        if (pipelineScenePollTimer) clearInterval(pipelineScenePollTimer);
+        pipelineScenePollTimer = setInterval(async () => {
+            try {
+                const resp = await fetch(`/api/long-video/status/${groupId}?brief=1`);
+                const data = await resp.json();
+                if (data.error) return;
+
+                let allDone = true;
+                for (const scene of data.scenes || []) {
+                    const n = scene.scene_num;
+                    const statusEl = document.getElementById(`pipeline-scene-status-${n}`);
+                    const progressEl = document.getElementById(`pipeline-scene-progress-${n}`);
+                    const videoEl = document.getElementById(`pipeline-scene-video-${n}`);
+
+                    if (statusEl) {
+                        if (scene.status === 'completed') {
+                            statusEl.className = 'project-status status-completed';
+                            statusEl.textContent = '已完成';
+                        } else if (scene.status === 'processing') {
+                            allDone = false;
+                            statusEl.className = 'project-status status-video_processing';
+                            statusEl.textContent = `生成中 ${scene.progress || 0}%`;
+                        } else if (scene.status === 'failed') {
+                            statusEl.className = 'project-status status-failed';
+                            statusEl.textContent = '失败';
+                        } else {
+                            allDone = false;
+                        }
+                    }
+
+                    if (progressEl) progressEl.style.width = (scene.progress || 0) + '%';
+                    if (scene.status === 'completed' && videoEl && !videoEl.dataset.done) {
+                        videoEl.dataset.done = '1';
+                        videoEl.innerHTML = renderSceneVideo(scene);
+                    }
+                }
+
+                if (data.status === 'completed' || data.status === 'failed' || allDone) {
+                    clearInterval(pipelineScenePollTimer);
+                    document.getElementById('step3').className = 'step done';
+                    // 显示合并视频按钮
+                    if (allDone || data.completed_scenes >= 2) {
+                        document.getElementById('pipelineMergeBtn').style.display = 'block';
+                    }
+                }
+            } catch (e) { /* retry */ }
+        }, 3000);
+    }
+
+    // ========== Script Generation ==========
+    async function generateScript() {
+        const topic = document.getElementById('scriptTopic').value.trim();
+        const prompt = document.getElementById('scriptPrompt').value.trim();
+        if (!topic && !prompt) { showToast('请输入主题或提示词', 'error'); return; }
+
+        const btn = document.getElementById('btnScript');
+        btn.disabled = true;
+        showLoading('scriptResult', 'AI 正在编写脚本...');
+
+        try {
+            const resp = await fetch('/api/script', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic, prompt })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                document.getElementById('scriptResult').innerHTML = `
+                    <div class="result-content" id="scriptContent">${renderMd(data.script)}</div>
+                    <div class="mt-4" style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button class="btn btn-sm btn-secondary" onclick="copyText('scriptContent')">&#128203; 复制脚本</button>
+                        <button class="btn btn-sm btn-primary" onclick="useScriptForImage()">&#127912; 用此脚本生成封面</button>
+                        <button class="btn btn-sm btn-pink" onclick="useScriptForVideo()">&#127909; 用此脚本生成视频</button>
+                    </div>`;
+                showToast('脚本生成成功！', 'success');
+            } else {
+                showToast(data.error || '生成失败', 'error');
+                document.getElementById('scriptResult').innerHTML = `<p style="color:var(--red)">${data.error}</p>`;
+            }
+        } catch (err) {
+            showToast('网络错误', 'error');
+            document.getElementById('scriptResult').innerHTML = '<p style="color:var(--red)">请求失败，请检查网络连接</p>';
+        }
+        btn.disabled = false;
+    }
+
+    function useScriptForImage() {
+        const content = document.getElementById('scriptContent').innerText.substring(0, 500);
+        document.getElementById('imagePrompt').value = '根据以下视频脚本生成一张吸引人的封面图：' + content;
+        switchTab('image');
+        showToast('已将脚本内容填入图片描述', 'info');
+    }
+
+    function useScriptForVideo() {
+        const content = document.getElementById('scriptContent').innerText.substring(0, 300);
+        document.getElementById('videoPrompt').value = content;
+        switchTab('video');
+        showToast('已将脚本内容填入视频描述', 'info');
+    }
+
+    // ========== AI Optimize ==========
+    async function aiOptimize(action) {
+        const topic = document.getElementById('scriptTopic').value.trim();
+        const prompt = document.getElementById('scriptPrompt').value.trim();
+        const content = topic || prompt;
+        if (!content) { showToast('请先输入主题或内容', 'error'); return; }
+
+        const aiDiv = document.getElementById('scriptAiResult');
+        const aiContent = document.getElementById('scriptAiContent');
+        aiDiv.style.display = 'block';
+        aiContent.innerHTML = '<div class="spinner" style="width:24px;height:24px;border-width:2px"></div>';
+
+        try {
+            const resp = await fetch('/api/ai/optimize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, action })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                aiContent.innerHTML = renderMd(data.result);
+            } else {
+                aiContent.innerHTML = `<span style="color:var(--red)">${data.error}</span>`;
+            }
+        } catch (err) {
+            aiContent.innerHTML = '<span style="color:var(--red)">请求失败</span>';
+        }
+    }
+
+    // ========== Image Generation ==========
+    async function generateImage() {
+        const prompt = document.getElementById('imagePrompt').value.trim();
+        const size = document.getElementById('imageSize').value;
+        if (!prompt) { showToast('请输入图片描述', 'error'); return; }
+
+        const btn = document.getElementById('btnImage');
+        btn.disabled = true;
+        showLoading('imageResult', 'AI 正在绘制图片...');
+
+        try {
+            const resp = await fetch('/api/image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, size })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                const imgSrc = data.image_local ? '/' + data.image_local : data.image_url;
+                document.getElementById('imageResult').innerHTML = `
+                    <div class="image-result">
+                        <img src="${imgSrc}" alt="生成的图片" loading="lazy">
+                        <div class="image-actions">
+                            <a href="${data.image_url}" target="_blank" class="btn btn-sm btn-secondary">&#128279; 原图链接</a>
+                            <button class="btn btn-sm btn-secondary" onclick="downloadImage('${data.image_url}', 'cover.png')">&#11015; 下载</button>
+                        </div>
+                    </div>`;
+                showToast('图片生成成功！', 'success');
+            } else {
+                showToast(data.error || '图片生成失败', 'error');
+                document.getElementById('imageResult').innerHTML = `<p style="color:var(--red)">${data.error}</p>`;
+            }
+        } catch (err) {
+            showToast('网络错误', 'error');
+            document.getElementById('imageResult').innerHTML = '<p style="color:var(--red)">请求失败，请检查网络连接</p>';
+        }
+        btn.disabled = false;
+    }
+
+    function downloadImage(url, filename) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    // ========== Video Generation ==========
+    async function generateVideo() {
+        const prompt = document.getElementById('videoPrompt').value.trim();
+        if (!prompt) { showToast('请输入视频描述', 'error'); return; }
+
+        const btn = document.getElementById('btnVideo');
+        btn.disabled = true;
+        showProgress('videoResult', 0, '正在提交视频任务...');
+
+        try {
+            const resp = await fetch('/api/video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast('视频任务已提交，正在生成...', 'info');
+                pollVideoStatus(data.task_id);
+            } else {
+                showToast(data.error || '视频任务创建失败', 'error');
+                document.getElementById('videoResult').innerHTML = `<p style="color:var(--red)">${data.error}</p>`;
+                btn.disabled = false;
+            }
+        } catch (err) {
+            showToast('网络错误', 'error');
+            document.getElementById('videoResult').innerHTML = '<p style="color:var(--red)">请求失败，请检查网络连接</p>';
+            btn.disabled = false;
+        }
+    }
+
+    function pollVideoStatus(taskId) {
+        const btn = document.getElementById('btnVideo');
+        const poll = setInterval(async () => {
+            try {
+                const resp = await fetch(`/api/video/status/${taskId}`);
+                const data = await resp.json();
+                const progress = data.progress || 0;
+                const status = data.status;
+
+                showProgress('videoResult', progress, `视频生成中... (${status})`);
+
+                if (status === 'completed') {
+                    clearInterval(poll);
+                    btn.disabled = false;
+                    const videoUrl = data.local_path ? '/' + data.local_path : data.video_url;
+                    document.getElementById('videoResult').innerHTML = `
+                        <div class="image-result">
+                            <video class="result-video" controls src="${videoUrl}"></video>
+                            <div class="image-actions">
+                                ${data.local_path ? `<a href="/${data.local_path}" download class="btn btn-sm btn-green">&#11015; 下载视频</a>` : ''}
+                                ${data.video_url ? `<a href="${data.video_url}" target="_blank" class="btn btn-sm btn-secondary">&#128279; 视频链接</a>` : ''}
+                            </div>
+                        </div>`;
+                    showToast('视频生成完成！', 'success');
+                } else if (status === 'failed') {
+                    clearInterval(poll);
+                    btn.disabled = false;
+                    document.getElementById('videoResult').innerHTML =
+                        '<p style="color:var(--red);text-align:center;padding:40px">视频生成失败，请稍后重试</p>';
+                    showToast('视频生成失败', 'error');
+                }
+            } catch (e) { /* retry */ }
+        }, 3000);
+    }
+
+    // ========== Projects ==========
+    async function loadProjects() {
+        const grid = document.getElementById('projectsGrid');
+        grid.innerHTML = '<div class="text-center" style="grid-column:1/-1;padding:40px"><div class="spinner"></div></div>';
+
+        try {
+            const resp = await fetch('/api/projects');
+            const data = await resp.json();
+            const projects = data.projects || [];
+
+            if (projects.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1">
+                        <div class="icon">&#128193;</div>
+                        <h3>暂无项目</h3>
+                        <p>使用一键创作功能开始你的第一个项目</p>
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = projects.map(p => {
+                const date = new Date(p.created_at).toLocaleDateString('zh-CN');
+                const statusClass = 'status-' + (p.status || 'completed');
+                const statusText = {
+                    completed: '已完成', generating: '生成中',
+                    video_processing: '视频处理中', failed: '失败', video_failed: '视频失败',
+                    long_video_completed: '长视频完成'
+                }[p.status] || p.status;
+                const thumbContent = p.image_local
+                    ? `<img src="/${p.image_local}" alt="封面">`
+                    : (p.image_url ? `<img src="${p.image_url}" alt="封面">` : '&#127916;');
+
+                return `
+                    <div class="project-card" onclick="openProject('${p.id}')">
+                        <div class="project-thumb">${thumbContent}</div>
+                        <div class="project-info">
+                            <h4>${p.topic}</h4>
+                            <div class="meta">
+                                <span>${date}</span>
+                                <span class="project-status ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+        } catch (err) {
+            grid.innerHTML = '<p style="color:var(--red);grid-column:1/-1;text-align:center">加载失败</p>';
+        }
+    }
+
+    async function openProject(projectId) {
+        const modal = document.getElementById('projectModal');
+        const content = document.getElementById('modalContent');
+        content.innerHTML = '<div class="text-center" style="padding:40px"><div class="spinner"></div></div>';
+        modal.classList.add('active');
+
+        try {
+            const resp = await fetch(`/api/project/${projectId}`);
+            const data = await resp.json();
+            const p = data.project;
+            if (!p) { content.innerHTML = '<p>项目不存在</p>'; return; }
+
+            const imgHtml = p.image_local
+                ? `<img src="/${p.image_local}" style="max-width:100%;border-radius:12px;margin:12px 0">`
+                : (p.image_url ? `<img src="${p.image_url}" style="max-width:100%;border-radius:12px;margin:12px 0">` : '');
+
+            const videoHtml = p.video_local
+                ? `<video controls style="width:100%;border-radius:12px;margin:12px 0" src="/${p.video_local}"></video>`
+                : (p.video_url ? `<video controls style="width:100%;border-radius:12px;margin:12px 0" src="${p.video_url}"></video>` : '');
+            const scenesHtml = (p.long_video_scenes || []).length ? `
+                <h3 style="font-size:1rem;margin-top:20px;margin-bottom:10px">&#127916; 分镜场景</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+                    ${(p.long_video_scenes || []).map(scene => `
+                        <div class="result-card" style="padding:14px">
+                            <div class="flex-between mb-2">
+                                <strong>场景 ${scene.scene_num}</strong>
+                                <span class="project-status status-${scene.status || 'completed'}">${scene.status === 'completed' ? '已完成' : scene.status === 'processing' ? '生成中' : scene.status === 'failed' ? '失败' : '待生成'}</span>
+                            </div>
+                            <textarea class="form-textarea" id="modal-scene-desc-${scene.scene_num}" rows="3">${escapeHtml(scene.description || scene.prompt || '')}</textarea>
+                            ${scene.local_path || scene.video_url ? renderSceneVideo(scene) : ''}
+                            <div class="image-actions">
+                                <button class="btn btn-sm btn-pink" onclick="regenerateModalScene(${scene.scene_num})">&#8635; 重新生成场景</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>` : '';
+
+            content.innerHTML = `
+                <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:6px">${p.topic}</h2>
+                <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:24px">
+                    创建于 ${new Date(p.created_at).toLocaleString('zh-CN')}
+                </p>
+                <textarea class="form-textarea" id="modalCoverPrompt" rows="3" placeholder="可编辑主图描述，不满意就重新生成"></textarea>
+                ${imgHtml}
+                <div class="image-actions">
+                    <button class="btn btn-sm btn-blue" onclick="regenerateModalCover()">&#8635; 重新生成主图</button>
+                </div>
+                ${videoHtml}
+                <div class="result-content" style="margin-top:20px">${renderMd(p.script || '暂无脚本')}</div>
+                ${scenesHtml}
+                <div style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap">
+                    ${scenesHtml ? `<button class="btn btn-pink" onclick="mergeVideos('${p.id}')">&#127916; 合并视频</button>` : ''}
+                    <button class="btn btn-sm btn-secondary" onclick="deleteProject('${p.id}')">&#128465; 删除项目</button>
+                </div>`;
+            currentPipelineProject = p;
+        } catch (err) {
+            content.innerHTML = '<p style="color:var(--red)">加载失败</p>';
+        }
+    }
+
+    async function deleteProject(projectId) {
+        if (!confirm('确定删除此项目？')) return;
+        try {
+            await fetch(`/api/project/${projectId}`, { method: 'DELETE' });
+            closeModal();
+            loadProjects();
+            showToast('项目已删除', 'success');
+        } catch (err) {
+            showToast('删除失败', 'error');
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('projectModal').classList.remove('active');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('projectModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // ========== Save Current Pipeline to Project ==========
+    function saveToProject() {
+        if (currentPipelineProject) {
+            showToast('项目已自动保存', 'success');
+            switchTab('projects');
+        } else {
+            showToast('没有可保存的内容', 'error');
+        }
+    }
+
+    // ========== Long Video Generation ==========
+    let lvPollTimer = null;
+    let lvCurrentGroupId = null;
+
+    async function startLongVideo() {
+        const topic = document.getElementById('longVideoTopic').value.trim();
+        if (!topic) { showToast('请输入视频主题', 'error'); return; }
+
+        const btn = document.getElementById('btnLongVideo');
+        btn.disabled = true;
+
+        // Reset UI
+        document.getElementById('longVideoProgress').style.display = 'block';
+        document.getElementById('longVideoScenes').style.display = 'none';
+        document.getElementById('longVideoDownload').style.display = 'none';
+        document.getElementById('longVideoScript').style.display = 'none';
+        document.getElementById('lvProgressTitle').textContent = '正在生成分镜脚本...';
+        document.getElementById('lvProgressBar').style.width = '0%';
+        document.getElementById('lvProgressPct').textContent = '0%';
+
+        try {
+            const resp = await fetch('/api/long-video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                showToast(data.error || '生成失败', 'error');
+                btn.disabled = false;
+                return;
+            }
+
+            lvCurrentGroupId = data.group_id;
+            showToast(`已拆分为 ${data.total_scenes} 个场景，开始生成视频...`, 'info');
+
+            // Show script
+            document.getElementById('longVideoScript').style.display = 'block';
+            document.getElementById('lvScriptContent').innerHTML = renderMd(data.script);
+
+            // Show scenes grid
+            document.getElementById('longVideoScenes').style.display = 'block';
+            renderSceneCards(data.total_scenes);
+
+            // Start polling
+            document.getElementById('lvProgressTitle').textContent = '正在生成视频片段...';
+            pollLongVideoStatus(data.group_id);
+
+        } catch (err) {
+            showToast('网络错误，请检查连接', 'error');
+        }
+        btn.disabled = false;
+    }
+
+    function renderSceneCards(count) {
+        const grid = document.getElementById('sceneGrid');
+        let html = '';
+        for (let i = 1; i <= count; i++) {
+            html += `
+                <div class="result-card" id="scene-card-${i}" style="padding:16px">
+                    <div class="flex-between mb-4">
+                        <span style="font-weight:700;font-size:0.95rem">场景 ${i}</span>
+                        <span class="project-status status-generating" id="scene-status-${i}">等待中</span>
+                    </div>
+                    <div id="scene-prompt-${i}" style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;min-height:36px">
+                        加载提示词中...
+                    </div>
+                    <div class="progress-bar" style="height:6px">
+                        <div class="progress-fill" id="scene-progress-${i}" style="width:0%"></div>
+                    </div>
+                    <div id="scene-video-${i}" class="mt-2"></div>
+                </div>`;
+        }
+        grid.innerHTML = html;
+    }
+
+    function pollLongVideoStatus(groupId) {
+        if (lvPollTimer) clearInterval(lvPollTimer);
+        lvPollTimer = setInterval(async () => {
+            try {
+                const resp = await fetch(`/api/long-video/status/${groupId}?brief=1`);
+                const data = await resp.json();
+
+                if (data.error) {
+                    clearInterval(lvPollTimer);
+                    showToast('查询状态失败', 'error');
+                    return;
+                }
+
+                // Update overall progress
+                const pct = data.overall_progress || 0;
+                document.getElementById('lvProgressBar').style.width = pct + '%';
+                document.getElementById('lvProgressPct').textContent = `${data.completed_scenes}/${data.total_scenes} 完成 (${pct}%)`;
+
+                // Update each scene card
+                for (const scene of data.scenes) {
+                    const n = scene.scene_num;
+                    const statusEl = document.getElementById(`scene-status-${n}`);
+                    const promptEl = document.getElementById(`scene-prompt-${n}`);
+                    const progressEl = document.getElementById(`scene-progress-${n}`);
+                    const videoEl = document.getElementById(`scene-video-${n}`);
+
+                    if (promptEl && promptEl.textContent === '加载提示词中...') {
+                        promptEl.textContent = scene.prompt;
+                    }
+
+                    if (statusEl) {
+                        if (scene.status === 'completed') {
+                            statusEl.className = 'project-status status-completed';
+                            statusEl.textContent = '已完成';
+                        } else if (scene.status === 'processing') {
+                            statusEl.className = 'project-status status-video_processing';
+                            statusEl.textContent = `生成中 ${scene.progress}%`;
+                        } else if (scene.status === 'failed') {
+                            statusEl.className = 'project-status status-failed';
+                            statusEl.textContent = '失败';
+                        }
+                    }
+
+                    if (progressEl) {
+                        progressEl.style.width = (scene.progress || 0) + '%';
+                    }
+
+                    if (scene.status === 'completed' && videoEl && !videoEl.dataset.done) {
+                        videoEl.dataset.done = '1';
+                        const src = scene.local_path ? '/' + scene.local_path : scene.video_url;
+                        videoEl.innerHTML = `
+                            <video controls style="width:100%;border-radius:8px;margin-top:8px" src="${src}"></video>
+                            <a href="${src}" download class="btn btn-sm btn-green mt-2" style="display:inline-flex">&#11015; 下载</a>`;
+                    }
+                }
+
+                // Check if all done
+                if (data.status === 'completed' || data.status === 'failed') {
+                    clearInterval(lvPollTimer);
+                    if (data.completed_scenes > 0) {
+                        document.getElementById('lvProgressTitle').textContent = `生成完成！共 ${data.completed_scenes}/${data.total_scenes} 个片段`;
+                        document.getElementById('longVideoDownload').style.display = 'block';
+                        showToast(`长视频生成完成！共 ${data.completed_scenes} 个片段`, 'success');
+                    } else {
+                        document.getElementById('lvProgressTitle').textContent = '生成失败';
+                        showToast('所有视频片段生成失败', 'error');
+                    }
+                }
+            } catch (e) { /* retry next interval */ }
+        }, 3000);
+    }
+
+    function downloadAllClips() {
+        if (!lvCurrentGroupId) return;
+        const group = document.getElementById('sceneGrid');
+        const videos = group.querySelectorAll('video');
+        videos.forEach((v, i) => {
+            const a = document.createElement('a');
+            a.href = v.src;
+            a.download = `scene_${i + 1}.mp4`;
+            a.click();
+        });
+        showToast('正在下载所有片段...', 'info');
+    }
+
+    function copyAllLinks() {
+        if (!lvCurrentGroupId) return;
+        const group = document.getElementById('sceneGrid');
+        const links = group.querySelectorAll('a[href]');
+        const urls = Array.from(links).map(a => a.href).join('\n');
+        navigator.clipboard.writeText(urls).then(() => {
+            showToast('已复制全部视频链接', 'success');
+        });
+    }
+
+    async function mergeVideos(groupId) {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = '合并中...';
+        try {
+            const resp = await fetch(`/api/video/merge/${groupId}`, { method: 'POST' });
+            const data = await resp.json();
+            if (!resp.ok) {
+                showToast(data.error || '合并失败', 'error');
+                btn.disabled = false;
+                btn.textContent = '合并视频';
+                return;
+            }
+            const src = '/' + data.merged_url;
+            // 显示合并后的视频和下载按钮
+            const container = btn.closest('.text-center') || btn.parentElement;
+            btn.remove();
+            container.innerHTML += `
+                <div class="mt-4" style="text-align:center">
+                    <video controls style="max-width:100%;border-radius:12px;margin-bottom:12px" src="${src}"></video>
+                    <br>
+                    <a href="${src}" download class="btn btn-green btn-lg">&#11015; 下载合并视频 (${data.scene_count}个场景)</a>
+                </div>`;
+            showToast(`合并完成！共 ${data.scene_count} 个场景`, 'success');
+        } catch (e) {
+            showToast('网络错误，请重试', 'error');
+            btn.disabled = false;
+            btn.textContent = '合并视频';
+        }
+    }
+
+    // ========== Init ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        // pre-warm
+    });
+</script>
+</body>
+</html>
