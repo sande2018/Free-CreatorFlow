@@ -1,6 +1,17 @@
+
+
 # 🎬 自媒体视频生成系统
 
 基于 Agnes-Video-V2.0 和 Agnes-2.0-Flash API 的一站式自媒体视频生成平台，支持从脚本创作到视频合成的全流程自动化。
+
+<img width="1920" height="896" alt="image" src="https://github.com/user-attachments/assets/7ebea180-0f0e-4cf5-8b6c-1f104e5f54b7" />
+
+<img width="1583" height="749" alt="image" src="https://github.com/user-attachments/assets/5fdf0aab-ff4c-4e97-96af-b341ac751a71" />
+
+<img width="1542" height="864" alt="image" src="https://github.com/user-attachments/assets/c122843f-6cdf-423e-a51b-8866ff846acb" />
+
+<img width="1550" height="1080" alt="image" src="https://github.com/user-attachments/assets/87a098a2-6ed2-4e41-b9f6-56820206c721" />
+
 
 ## ✨ 功能特性
 
