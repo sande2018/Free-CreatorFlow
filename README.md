@@ -18,6 +18,10 @@
 
 <img width="1550" height="1080" alt="image" src="https://github.com/user-attachments/assets/87a098a2-6ed2-4e41-b9f6-56820206c721" />
 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/780b9fc5-686e-4be5-b189-ef36081dd4b4" />
+
+<img width="1582" height="1025" alt="image" src="https://github.com/user-attachments/assets/645c1c60-0df8-41c4-a66e-13e1ac14724f" />
+
 
 ## ✨ 功能特性
 
